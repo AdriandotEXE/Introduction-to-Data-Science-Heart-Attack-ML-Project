@@ -22,6 +22,7 @@ library(reticulate)    # For hyperparameter optimization
 library(RcppRoll)      # For fast rolling functions
 library(gridExtra)     # For arranging plots
 library(ggplot2)       # Load the ggplot2 package
+library(dplyr)
 # Specify the file path using forward slashes or double backslashes
 file_path <- "C:/Users/adria/Downloads/Introduction to Data Science/Project/2022/heart_2022_no_nans.csv"
 
@@ -31,6 +32,43 @@ data <- read.csv(file_path)
 # Check the structure of the data
 str(data)
 print("This is an example for Github changes")
+```
+
+
+```{r}
+#Most common age group of users who have had heart attacks
+#percentage of users who have not had heart attacks
+#How many users have not had heart attacks
+# percentage of users who have had heart attacks
+# How many users have had heart attacks
+#Top 15 variables that appear in user who have had heart attack.
+ 
+heart_attack_data <- data[data$HadHeartAttack == "Yes", ]
+ 
+ 
+most_common_age_group <- names(sort(table(heart_attack_data$AgeCategory), decreasing = TRUE))[1]
+ 
+cat("Most common Age group:", most_common_age_group, "\n")
+ 
+ 
+
+#Top 15 variables that appear in usser who have had heart attack.
+ 
+ 
+heart_attack_data_yes <- heart_attack_data %>%
+  filter(HadHeartAttack == "Yes")
+ 
+variable_counts <- heart_attack_data_yes %>%
+  summarise(across(everything(), ~ sum(!is.na(.))))
+ 
+variable_counts_df <- data.frame(variable = names(variable_counts), count = as.numeric(unlist(variable_counts)))
+ 
+top_15_variables <- variable_counts_df %>%
+  arrange(desc(count)) %>%
+  slice_head(n = 15) %>%
+  pull(variable)
+cat("Top 15 variables for rows with 'Yes' in HadHeartAttack column:\n")
+print(top_15_variables)
 
 ```
 
