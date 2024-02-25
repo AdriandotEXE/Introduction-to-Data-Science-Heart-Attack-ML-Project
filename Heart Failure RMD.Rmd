@@ -1,0 +1,247 @@
+---
+title: "Heart Failure Analysis"
+author: "Adrian Tores"
+date: "2024-02-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(tidyverse)     # For data manipulation and visualization
+library(caret)         # For machine learning tasks
+library(reticulate)    # For hyperparameter optimization
+library(RcppRoll)      # For fast rolling functions
+library(gridExtra)     # For arranging plots
+library(ggplot2)       # Load the ggplot2 package
+# Specify the file path using forward slashes or double backslashes
+file_path <- "C:/Users/adria/Downloads/Introduction to Data Science/Project/2022/heart_2022_no_nans.csv"
+
+# Read the CSV file and assign it to a variable
+data <- read.csv(file_path)
+
+# Check the structure of the data
+str(data)
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+library(tidyverse)    # For data manipulation and visualization
+library(ggplot2)      # For creating plots
+
+# Create a data frame for the counts of each category
+health_counts <- data %>%
+  count(GeneralHealth)
+
+# Plotting
+ggplot(health_counts, aes(x = GeneralHealth, y = n)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "General Health", y = "Counts", title = "Distribution of General Health") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  # Rotate x-axis labels
+
+  
+```
+```{r}
+# Selecting specific columns
+selected_cols <- c(
+  "Sex", "GeneralHealth", "PhysicalHealthDays", "MentalHealthDays",
+  "PhysicalActivities", "SleepHours", "RemovedTeeth", "HadHeartAttack",
+  "HadAngina", "HadStroke", "HadAsthma", "HadSkinCancer", "HadCOPD",
+  "HadDepressiveDisorder", "HadKidneyDisease", "HadArthritis", "HadDiabetes",
+  "DeafOrHardOfHearing", "BlindOrVisionDifficulty", "DifficultyConcentrating",
+  "DifficultyWalking", "DifficultyDressingBathing", "DifficultyErrands",
+  "SmokerStatus", "ECigaretteUsage", "ChestScan", "RaceEthnicityCategory",
+  "AgeCategory", "HeightInMeters", "WeightInKilograms", "BMI", "AlcoholDrinkers",
+  "HIVTesting", "FluVaxLast12", "PneumoVaxEver", "TetanusLast10Tdap", "HighRiskLastYear"
+)
+
+
+
+data_subset <- data[selected_cols]
+# Print the dimensions and the first few rows of the selected data
+print(dim(data_subset))
+head(data_subset)
+
+library(dplyr)
+
+# Separate columns by data type
+cat_cols <- data_subset %>%
+  select_if(is.character) %>%
+  names()
+
+num_cols <- data_subset %>%
+  select_if(is.numeric) %>%
+  names()
+
+dbl_cols <- data_subset %>%
+  select_if(is.double) %>%
+  names()
+
+# Print the lengths of cat_cols, num_cols, and dbl_cols
+cat("Length of cat_cols:", length(cat_cols), "\n")
+cat("Length of num_cols:", length(num_cols), "\n")
+cat("Length of dbl_cols:", length(dbl_cols), "\n")
+
+# Print the total number of columns in data_train
+cat("Total number of columns in data_train:", ncol(data_train), "\n")
+
+```
+
+
+```{r}
+summary(data_subset[, c("PhysicalHealthDays", "MentalHealthDays", "SleepHours", "HeightInMeters", "WeightInKilograms", "BMI")])
+
+```
+
+
+```{r}
+
+library(dplyr)
+
+# Select specific columns
+selected_cols <- c(
+  "Sex", "GeneralHealth", "PhysicalHealthDays", "MentalHealthDays",
+  "PhysicalActivities", "SleepHours", "RemovedTeeth", "HadHeartAttack",
+  "HadAngina", "HadStroke", "HadAsthma", "HadSkinCancer", "HadCOPD",
+  "HadDepressiveDisorder", "HadKidneyDisease", "HadArthritis", "HadDiabetes",
+  "DeafOrHardOfHearing", "BlindOrVisionDifficulty", "DifficultyConcentrating",
+  "DifficultyWalking", "DifficultyDressingBathing", "DifficultyErrands",
+  "SmokerStatus", "ECigaretteUsage", "ChestScan", "RaceEthnicityCategory",
+  "AgeCategory", "HeightInMeters", "WeightInKilograms", "BMI", "AlcoholDrinkers",
+  "HIVTesting", "FluVaxLast12", "PneumoVaxEver", "TetanusLast10Tdap", "HighRiskLastYear"
+)
+
+# Select the subset of data with specific columns
+data_subset <- data[selected_cols]
+
+# Print the dimensions and the first few rows of the selected data
+print(dim(data_subset))
+head(data_subset)
+
+# Remove state variables from the dataset
+data_subset <- data_subset %>%
+  select(-starts_with("State"))  # Remove columns starting with "State"
+
+# Data preprocessing
+# Convert categorical variables to factors
+data_subset <- mutate_if(data_subset, is.character, as.factor)
+
+# Handle missing values if any
+data_subset <- na.omit(data_subset)
+
+# Set seed for reproducibility
+set.seed(123)  # for reproducibility
+
+# Split data into training and testing sets
+train_index <- sample(nrow(data_subset), 0.7 * nrow(data_subset))  # 70% train, 30% test
+train_data <- data_subset[train_index, ]
+test_data <- data_subset[-train_index, ]
+
+# Model training
+# Fit logistic regression model
+model <- glm(HadHeartAttack ~ ., data = train_data, family = binomial)
+
+# Model evaluation
+# Make predictions on test set
+pred_probs <- predict(model, newdata = test_data, type = "response")
+
+# Convert probabilities to binary predictions
+pred_labels <- ifelse(pred_probs > 0.5, "Yes", "No")
+
+# Convert pred_labels to a factor with levels "No" and "Yes"
+pred_labels <- factor(pred_labels, levels = c("No", "Yes"))
+
+# Convert test_data$HadHeartAttack to a factor with the same levels as pred_labels
+test_data$HadHeartAttack <- factor(test_data$HadHeartAttack, levels = c("No", "Yes"))
+
+# Evaluate predictions
+conf_matrix <- confusionMatrix(data = pred_labels, reference = test_data$HadHeartAttack)
+print(conf_matrix)
+
+# Print accuracy
+print(paste("Accuracy:", conf_matrix$overall["Accuracy"]))
+
+
+```
+
+
+```{r}
+# Print summary of the logistic regression model
+summary(model)
+
+# Extract feature importances from the model
+feature_importances <- summary(model)$coefficients[-1, "Pr(>|z|)"]  # Extract p-values as importance scores
+
+# Create a data frame for feature importances
+feature_importance_data <- data.frame(
+  feature = names(feature_importances),
+  importance = feature_importances
+)
+
+# Sort the data frame by importance in descending order
+feature_importance_data <- feature_importance_data[order(feature_importance_data$importance, decreasing = TRUE), ]
+
+
+# Plot Top N Features Only
+top_n <- 5 # Adjust this value based on how many top features you want to display
+
+# Create the plot
+ggplot(head(feature_importance_data, top_n), aes(x = importance, y = reorder(factor(feature, levels = rev(feature_importance_data$feature)), importance))) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Importance", y = "Feature", title = paste("Top", top_n, "Feature Importances")) +
+  theme_minimal() +
+  coord_flip()  # Horizontal bar plot
+
+
+```
+
+
+```{r}
+# Extract predictor variable names from the model object
+predictor_variables <- names(coef(model))[-1]  # Exclude the intercept term
+
+# Print the list of predictor variables
+print(predictor_variables)
+```
+
+
+```{r}
+# Extract the coefficients from the model
+coefficients <- coef(model)[-1]  # Exclude the intercept term
+
+# Order the coefficients by their absolute values to get the most influential variables
+sorted_indices <- order(abs(coefficients), decreasing = TRUE)
+
+# Get the sorted variable indices
+sorted_feature_indices <- sorted_indices + 1  # Adjust for intercept term removal
+
+# Print the sorted variable indices
+print(sorted_feature_indices)
+
+# Assuming 'data' is your data frame
+feature_names <- colnames(data)
+
+# Get the names of the variables corresponding to the sorted indices
+sorted_feature_names <- feature_names[sorted_feature_indices]
+
+# Print the sorted variable names
+print(sorted_feature_names)
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
