@@ -102,7 +102,7 @@ You can also embed plots, for example:
 
 ```{r}
 library(tidyverse)    # For data manipulation and visualization
-library(ggplot2)      # For creating plots
+
 
 # Create a data frame for the counts of each category
 health_counts <- data %>%
@@ -138,8 +138,6 @@ data_subset <- data[selected_cols]
 print(dim(data_subset))
 head(data_subset)
 
-library(dplyr)
-
 # Separate columns by data type
 cat_cols <- data_subset %>%
   select_if(is.character) %>%
@@ -158,8 +156,7 @@ cat("Length of cat_cols:", length(cat_cols), "\n")
 cat("Length of num_cols:", length(num_cols), "\n")
 cat("Length of dbl_cols:", length(dbl_cols), "\n")
 
-# Print the total number of columns in data_train
-cat("Total number of columns in data_train:", ncol(data_train), "\n")
+
 
 ```
 
@@ -171,7 +168,6 @@ summary(data_subset[, c("PhysicalHealthDays", "MentalHealthDays", "SleepHours", 
 
 
 ```{r}
-
 library(dplyr)
 
 # Select specific columns
@@ -233,10 +229,114 @@ test_data$HadHeartAttack <- factor(test_data$HadHeartAttack, levels = c("No", "Y
 # Evaluate predictions
 conf_matrix <- confusionMatrix(data = pred_labels, reference = test_data$HadHeartAttack)
 print(conf_matrix)
-
+# Print the total number of columns in data_train
+cat("Total number of columns in data_train:", ncol(train_data), "\n")
 # Print accuracy
 print(paste("Accuracy:", conf_matrix$overall["Accuracy"]))
+```
 
+
+```{r}
+library(car)  # For VIF calculation
+# Load necessary libraries
+library(caret)  # For model evaluation and cross-validation
+library(car)    # For VIF calculation
+
+# Compute prevalence of the positive class
+prevalence <- mean(train_data$HadHeartAttack == "Yes")
+cat("Prevalence of HadHeartAttack = Yes:", prevalence, "\n")
+
+# Test for collinearity
+correlation_matrix <- cor(train_data[num_cols])
+print("Correlation Matrix:")
+print(correlation_matrix)
+
+# Compute VIF for all predictors
+vif_values <- vif(model)
+print("VIF Values:")
+print(vif_values)
+
+# Perform k-fold cross-validation
+set.seed(123)  # For reproducibility
+ctrl <- trainControl(method = "cv", number = 10)  # 10-fold cross-validation
+fit <- train(HadHeartAttack ~ ., data = train_data, method = "glm", family = binomial, trControl = ctrl)
+
+# Print the cross-validated performance metrics
+print("Cross-Validated Performance Metrics:")
+print(fit)
+
+# Get feature importance from the logistic regression model
+feature_importance <- varImp(fit$finalModel)
+print("Feature Importance:")
+print(feature_importance)
+
+# Plot correlation matrix using heatmap
+heatmap(correlation_matrix, 
+        symm = TRUE,  # Ensure symmetry
+        margins = c(5, 5),  # Adjust margins
+        col = colorRampPalette(c("blue", "white", "red"))(100))  # Color scheme
+
+# Reorder variables based on hierarchical clustering
+reordered_matrix <- correlation_matrix[hclust(dist(correlation_matrix))$order, ]
+
+# Plot reordered correlation matrix using heatmap
+heatmap(reordered_matrix, 
+        symm = TRUE, 
+        margins = c(5, 5), 
+        col = colorRampPalette(c("blue", "white", "red"))(100))
+```
+
+
+```{r}
+# Load necessary library
+library(glmnet)
+
+# Fit logistic regression model with LASSO regularization
+lasso_model <- glmnet(as.matrix(train_data[, num_cols]), as.factor(train_data$HadHeartAttack), family = "binomial", alpha = 1)
+
+# Plot the coefficient profiles
+plot(lasso_model, xvar = "lambda", label = TRUE)
+
+# Choose lambda using cross-validation
+cv_model <- cv.glmnet(as.matrix(train_data[, num_cols]), as.factor(train_data$HadHeartAttack), family = "binomial", alpha = 1)
+
+# Plot cross-validation results
+plot(cv_model)
+
+# Select the optimal lambda value
+optimal_lambda <- cv_model$lambda.min
+cat("Optimal lambda value selected:", optimal_lambda, "\n")
+
+# Refit the model with the optimal lambda
+lasso_model_optimal <- glmnet(as.matrix(train_data[, num_cols]), as.factor(train_data$HadHeartAttack), family = "binomial", alpha = 1, lambda = optimal_lambda)
+
+# Extract coefficients from the optimal LASSO model
+lasso_coefficients <- coef(lasso_model_optimal)
+print(lasso_coefficients)
+```
+
+
+```{r}
+# Predict probabilities on the test set using the LASSO-adjusted logistic regression model
+pred_probs <- predict(lasso_model_optimal, newx = as.matrix(test_data[, num_cols]), s = optimal_lambda, type = "response")
+
+# Convert probabilities to binary predictions
+pred_labels <- ifelse(pred_probs > 0.5, "Yes", "No")
+
+# Compute accuracy
+accuracy <- mean(pred_labels == test_data$HadHeartAttack)
+cat("Accuracy:", accuracy, "\n")
+
+# Compute AUC-ROC
+library(pROC)
+roc_obj <- roc(test_data$HadHeartAttack, pred_probs)
+auc_roc <- auc(roc_obj)
+cat("AUC-ROC:", auc_roc, "\n")
+
+# Compute deviance
+deviance <- sum(-2 * log(pred_probs[test_data$HadHeartAttack == "Yes"]) + 
+                 2 * log(1 - pred_probs[test_data$HadHeartAttack == "No"]))
+cat("Deviance:", deviance, "\n")
 
 ```
 
