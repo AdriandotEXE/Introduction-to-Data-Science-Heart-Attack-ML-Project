@@ -337,6 +337,28 @@ cat("AUC-ROC:", auc_roc, "\n")
 deviance <- sum(-2 * log(pred_probs[test_data$HadHeartAttack == "Yes"]) + 
                  2 * log(1 - pred_probs[test_data$HadHeartAttack == "No"]))
 cat("Deviance:", deviance, "\n")
+```
+
+
+```{r}
+# Extract coefficients and p-values from the summary of the logistic regression model
+model_summary <- summary(model)
+coefficients <- model_summary$coefficients[, "Estimate"]
+p_values <- model_summary$coefficients[, "Pr(>|z|)"]
+
+# Select predictors with significant coefficients (p-value < 0.05)
+significant_predictors <- coefficients[p_values < 0.05]
+print("Significant Predictors:")
+print(significant_predictors)
+# Calculate the proportion of each class in the dataset
+class_proportions <- table(data$HadHeartAttack) / nrow(data)
+most_prevalent_class <- names(class_proportions)[which.max(class_proportions)]
+print("Most Prevalent Class:")
+print(most_prevalent_class)
+# Plot residuals against predicted probabilities
+residuals <- residuals(model, type = "response")
+predicted_probs <- predict(model, type = "response")
+plot(predicted_probs, residuals, xlab = "Predicted Probabilities", ylab = "Residuals", main = "Residuals vs. Predicted Probabilities")
 
 ```
 
