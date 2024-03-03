@@ -1,6 +1,6 @@
 ---
-title: "Heart Failure Analysis"
-author: "Adrian Tores"
+title: "Heart Attack Analysis"
+author: "Adrian Torres"
 date: "2024-02-18"
 output: html_document
 ---
@@ -31,7 +31,7 @@ data <- read.csv(file_path)
 
 # Check the structure of the data
 str(data)
-print("This is an example for Github changes")
+
 ```
 
 
@@ -82,11 +82,11 @@ ggplot(data, aes(x = RaceEthnicityCategory, y = HadHeartAttack, fill = RaceEthni
   labs(title = "Heart Attack By Race", x = "Race", y = "HadHeartAttack") +
   theme_minimal() +
   theme(
-    axis.text.x = element_text(size = 12, angle = 45, hjust = 1), # Adjust x-axis text size and angle
-    axis.text.y = element_text(size = 12), # Adjust y-axis text size
-    plot.title = element_text(size = 16, face = "bold"), # Adjust title text size and style
+    axis.text.x = element_text(size =10, angle = 45, hjust = 1), # Adjust x-axis text size and angle
+    axis.text.y = element_text(size = 10), # Adjust y-axis text size
+    plot.title = element_text(size = 10, face = "bold"), # Adjust title text size and style
     legend.title = element_blank(), # Remove legend title
-    legend.text = element_text(size = 12), # Adjust legend text size
+    legend.text = element_text(size = 10), # Adjust legend text size
     plot.background = element_rect(fill = "white"), # Adjust plot background color
     panel.background = element_rect(fill = "white"), # Adjust panel background color
     panel.grid.major = element_blank(), # Remove major grid lines
@@ -94,6 +94,36 @@ ggplot(data, aes(x = RaceEthnicityCategory, y = HadHeartAttack, fill = RaceEthni
     plot.margin = unit(c(1, 1, 1, 1), "cm") # Adjust plot margins
   ) +
   guides(fill = guide_legend(override.aes = list(size = 4)))
+```
+
+
+```{r}
+
+library(ggplot2)
+
+# Assuming you have a data frame named 'data' with a column named 'RaceEthnicityCategory'
+# If not, replace 'data' with the name of your data frame and 'RaceEthnicityCategory' with the appropriate column name.
+
+# Count occurrences of each category
+category_counts <- table(data$RaceEthnicityCategory)
+
+# Convert the table to a data frame
+category_counts_df <- as.data.frame(category_counts)
+names(category_counts_df) <- c("RaceEthnicityCategory", "Count")
+
+# Create pie chart
+pie_chart <- ggplot(category_counts_df, aes(x = "", y = Count, fill = RaceEthnicityCategory)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  ggtitle("Race/Ethnicity Distribution") +
+  theme(
+    plot.title = element_text(size = 20, hjust = 0.5)
+  )
+
+print(pie_chart)
+
+
 ```
 
 ## Including Plots
