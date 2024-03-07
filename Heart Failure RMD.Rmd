@@ -1,6 +1,6 @@
 ---
-title: "Heart Attack Analysis"
-author: "Adrian Torres"
+title: "Heart Failure Analysis"
+author: "Adrian Tores"
 date: "2024-02-18"
 output: html_document
 ---
@@ -22,7 +22,6 @@ library(reticulate)    # For hyperparameter optimization
 library(RcppRoll)      # For fast rolling functions
 library(gridExtra)     # For arranging plots
 library(ggplot2)       # Load the ggplot2 package
-library(dplyr)
 # Specify the file path using forward slashes or double backslashes
 file_path <- "C:/Users/adria/Downloads/Introduction to Data Science/Project/2022/heart_2022_no_nans.csv"
 
@@ -31,97 +30,6 @@ data <- read.csv(file_path)
 
 # Check the structure of the data
 str(data)
-
-```
-
-
-```{r}
-
-#Frank
-#Most common age group of users who have had heart attacks
-#percentage of users who have not had heart attacks
-#How many users have not had heart attacks
-# percentage of users who have had heart attacks
-# How many users have had heart attacks
-#Top 15 variables that appear in user who have had heart attack.
- 
-heart_attack_data <- data[data$HadHeartAttack == "Yes", ]
- 
- 
-most_common_age_group <- names(sort(table(heart_attack_data$AgeCategory), decreasing = TRUE))[1]
- 
-cat("Most common Age group:", most_common_age_group, "\n")
- 
- 
-
-#Top 15 variables that appear in usser who have had heart attack.
- 
- 
-heart_attack_data_yes <- heart_attack_data %>%
-  filter(HadHeartAttack == "Yes")
- 
-variable_counts <- heart_attack_data_yes %>%
-  summarise(across(everything(), ~ sum(!is.na(.))))
- 
-variable_counts_df <- data.frame(variable = names(variable_counts), count = as.numeric(unlist(variable_counts)))
- 
-top_15_variables <- variable_counts_df %>%
-  arrange(desc(count)) %>%
-  slice_head(n = 15) %>%
-  pull(variable)
-cat("Top 15 variables for rows with 'Yes' in HadHeartAttack column:\n")
-print(top_15_variables)
-```
-
-
-```{r}
-#Paige
-# Create the bar plot with adjusted text size and graph size
-ggplot(data, aes(x = RaceEthnicityCategory, y = HadHeartAttack, fill = RaceEthnicityCategory)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Heart Attack By Race", x = "Race", y = "HadHeartAttack") +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(size =10, angle = 45, hjust = 1), # Adjust x-axis text size and angle
-    axis.text.y = element_text(size = 10), # Adjust y-axis text size
-    plot.title = element_text(size = 10, face = "bold"), # Adjust title text size and style
-    legend.title = element_blank(), # Remove legend title
-    legend.text = element_text(size = 10), # Adjust legend text size
-    plot.background = element_rect(fill = "white"), # Adjust plot background color
-    panel.background = element_rect(fill = "white"), # Adjust panel background color
-    panel.grid.major = element_blank(), # Remove major grid lines
-    panel.grid.minor = element_blank(), # Remove minor grid lines
-    plot.margin = unit(c(1, 1, 1, 1), "cm") # Adjust plot margins
-  ) +
-  guides(fill = guide_legend(override.aes = list(size = 4)))
-```
-
-
-```{r}
-
-library(ggplot2)
-
-# Assuming you have a data frame named 'data' with a column named 'RaceEthnicityCategory'
-# If not, replace 'data' with the name of your data frame and 'RaceEthnicityCategory' with the appropriate column name.
-
-# Count occurrences of each category
-category_counts <- table(data$RaceEthnicityCategory)
-
-# Convert the table to a data frame
-category_counts_df <- as.data.frame(category_counts)
-names(category_counts_df) <- c("RaceEthnicityCategory", "Count")
-
-# Create pie chart
-pie_chart <- ggplot(category_counts_df, aes(x = "", y = Count, fill = RaceEthnicityCategory)) +
-  geom_bar(stat = "identity", width = 1) +
-  coord_polar("y", start = 0) +
-  theme_void() +
-  ggtitle("Race/Ethnicity Distribution") +
-  theme(
-    plot.title = element_text(size = 20, hjust = 0.5)
-  )
-
-print(pie_chart)
 
 
 ```
@@ -132,7 +40,7 @@ You can also embed plots, for example:
 
 ```{r}
 library(tidyverse)    # For data manipulation and visualization
-
+library(ggplot2)      # For creating plots
 
 # Create a data frame for the counts of each category
 health_counts <- data %>%
@@ -168,6 +76,8 @@ data_subset <- data[selected_cols]
 print(dim(data_subset))
 head(data_subset)
 
+library(dplyr)
+
 # Separate columns by data type
 cat_cols <- data_subset %>%
   select_if(is.character) %>%
@@ -180,45 +90,6 @@ num_cols <- data_subset %>%
 dbl_cols <- data_subset %>%
   select_if(is.double) %>%
   names()
-
-# Print the lengths of cat_cols, num_cols, and dbl_cols
-cat("Length of cat_cols:", length(cat_cols), "\n")
-cat("Length of num_cols:", length(num_cols), "\n")
-cat("Length of dbl_cols:", length(dbl_cols), "\n")
-
-
-
-```
-
-
-```{r}
-summary(data_subset[, c("PhysicalHealthDays", "MentalHealthDays", "SleepHours", "HeightInMeters", "WeightInKilograms", "BMI")])
-
-```
-
-
-```{r}
-library(dplyr)
-
-# Select specific columns
-selected_cols <- c(
-  "Sex", "GeneralHealth", "PhysicalHealthDays", "MentalHealthDays",
-  "PhysicalActivities", "SleepHours", "RemovedTeeth", "HadHeartAttack",
-  "HadAngina", "HadStroke", "HadAsthma", "HadSkinCancer", "HadCOPD",
-  "HadDepressiveDisorder", "HadKidneyDisease", "HadArthritis", "HadDiabetes",
-  "DeafOrHardOfHearing", "BlindOrVisionDifficulty", "DifficultyConcentrating",
-  "DifficultyWalking", "DifficultyDressingBathing", "DifficultyErrands",
-  "SmokerStatus", "ECigaretteUsage", "ChestScan", "RaceEthnicityCategory",
-  "AgeCategory", "HeightInMeters", "WeightInKilograms", "BMI", "AlcoholDrinkers",
-  "HIVTesting", "FluVaxLast12", "PneumoVaxEver", "TetanusLast10Tdap", "HighRiskLastYear"
-)
-
-# Select the subset of data with specific columns
-data_subset <- data[selected_cols]
-
-# Print the dimensions and the first few rows of the selected data
-print(dim(data_subset))
-head(data_subset)
 
 # Remove state variables from the dataset
 data_subset <- data_subset %>%
@@ -259,136 +130,22 @@ test_data$HadHeartAttack <- factor(test_data$HadHeartAttack, levels = c("No", "Y
 # Evaluate predictions
 conf_matrix <- confusionMatrix(data = pred_labels, reference = test_data$HadHeartAttack)
 print(conf_matrix)
-# Print the total number of columns in data_train
-cat("Total number of columns in data_train:", ncol(train_data), "\n")
+
 # Print accuracy
 print(paste("Accuracy:", conf_matrix$overall["Accuracy"]))
+# Print the lengths of cat_cols, num_cols, and dbl_cols
+cat("Length of cat_cols:", length(cat_cols), "\n")
+cat("Length of num_cols:", length(num_cols), "\n")
+cat("Length of dbl_cols:", length(dbl_cols), "\n")
+
+# Print the total number of columns in data_train
+cat("Total number of columns in data_train:", ncol(data_train), "\n")
+
 ```
 
 
 ```{r}
-library(car)  # For VIF calculation
-# Load necessary libraries
-library(caret)  # For model evaluation and cross-validation
-library(car)    # For VIF calculation
-
-# Compute prevalence of the positive class
-prevalence <- mean(train_data$HadHeartAttack == "Yes")
-cat("Prevalence of HadHeartAttack = Yes:", prevalence, "\n")
-
-# Test for collinearity
-correlation_matrix <- cor(train_data[num_cols])
-print("Correlation Matrix:")
-print(correlation_matrix)
-
-# Compute VIF for all predictors
-vif_values <- vif(model)
-print("VIF Values:")
-print(vif_values)
-
-# Perform k-fold cross-validation
-set.seed(123)  # For reproducibility
-ctrl <- trainControl(method = "cv", number = 10)  # 10-fold cross-validation
-fit <- train(HadHeartAttack ~ ., data = train_data, method = "glm", family = binomial, trControl = ctrl)
-
-# Print the cross-validated performance metrics
-print("Cross-Validated Performance Metrics:")
-print(fit)
-
-# Get feature importance from the logistic regression model
-feature_importance <- varImp(fit$finalModel)
-print("Feature Importance:")
-print(feature_importance)
-
-# Plot correlation matrix using heatmap
-heatmap(correlation_matrix, 
-        symm = TRUE,  # Ensure symmetry
-        margins = c(5, 5),  # Adjust margins
-        col = colorRampPalette(c("blue", "white", "red"))(100))  # Color scheme
-
-# Reorder variables based on hierarchical clustering
-reordered_matrix <- correlation_matrix[hclust(dist(correlation_matrix))$order, ]
-
-# Plot reordered correlation matrix using heatmap
-heatmap(reordered_matrix, 
-        symm = TRUE, 
-        margins = c(5, 5), 
-        col = colorRampPalette(c("blue", "white", "red"))(100))
-```
-
-
-```{r}
-# Load necessary library
-library(glmnet)
-
-# Fit logistic regression model with LASSO regularization
-lasso_model <- glmnet(as.matrix(train_data[, num_cols]), as.factor(train_data$HadHeartAttack), family = "binomial", alpha = 1)
-
-# Plot the coefficient profiles
-plot(lasso_model, xvar = "lambda", label = TRUE)
-
-# Choose lambda using cross-validation
-cv_model <- cv.glmnet(as.matrix(train_data[, num_cols]), as.factor(train_data$HadHeartAttack), family = "binomial", alpha = 1)
-
-# Plot cross-validation results
-plot(cv_model)
-
-# Select the optimal lambda value
-optimal_lambda <- cv_model$lambda.min
-cat("Optimal lambda value selected:", optimal_lambda, "\n")
-
-# Refit the model with the optimal lambda
-lasso_model_optimal <- glmnet(as.matrix(train_data[, num_cols]), as.factor(train_data$HadHeartAttack), family = "binomial", alpha = 1, lambda = optimal_lambda)
-
-# Extract coefficients from the optimal LASSO model
-lasso_coefficients <- coef(lasso_model_optimal)
-print(lasso_coefficients)
-```
-
-
-```{r}
-# Predict probabilities on the test set using the LASSO-adjusted logistic regression model
-pred_probs <- predict(lasso_model_optimal, newx = as.matrix(test_data[, num_cols]), s = optimal_lambda, type = "response")
-
-# Convert probabilities to binary predictions
-pred_labels <- ifelse(pred_probs > 0.5, "Yes", "No")
-
-# Compute accuracy
-accuracy <- mean(pred_labels == test_data$HadHeartAttack)
-cat("Accuracy:", accuracy, "\n")
-
-# Compute AUC-ROC
-library(pROC)
-roc_obj <- roc(test_data$HadHeartAttack, pred_probs)
-auc_roc <- auc(roc_obj)
-cat("AUC-ROC:", auc_roc, "\n")
-
-# Compute deviance
-deviance <- sum(-2 * log(pred_probs[test_data$HadHeartAttack == "Yes"]) + 
-                 2 * log(1 - pred_probs[test_data$HadHeartAttack == "No"]))
-cat("Deviance:", deviance, "\n")
-```
-
-
-```{r}
-# Extract coefficients and p-values from the summary of the logistic regression model
-model_summary <- summary(model)
-coefficients <- model_summary$coefficients[, "Estimate"]
-p_values <- model_summary$coefficients[, "Pr(>|z|)"]
-
-# Select predictors with significant coefficients (p-value < 0.05)
-significant_predictors <- coefficients[p_values < 0.05]
-print("Significant Predictors:")
-print(significant_predictors)
-# Calculate the proportion of each class in the dataset
-class_proportions <- table(data$HadHeartAttack) / nrow(data)
-most_prevalent_class <- names(class_proportions)[which.max(class_proportions)]
-print("Most Prevalent Class:")
-print(most_prevalent_class)
-# Plot residuals against predicted probabilities
-residuals <- residuals(model, type = "response")
-predicted_probs <- predict(model, type = "response")
-plot(predicted_probs, residuals, xlab = "Predicted Probabilities", ylab = "Residuals", main = "Residuals vs. Predicted Probabilities")
+summary(data_subset[, c("PhysicalHealthDays", "MentalHealthDays", "SleepHours", "HeightInMeters", "WeightInKilograms", "BMI")])
 
 ```
 
@@ -425,11 +182,13 @@ ggplot(head(feature_importance_data, top_n), aes(x = importance, y = reorder(fac
 
 
 ```{r}
+
 # Extract predictor variable names from the model object
 predictor_variables <- names(coef(model))[-1]  # Exclude the intercept term
 
 # Print the list of predictor variables
 print(predictor_variables)
+
 ```
 
 
@@ -454,6 +213,11 @@ sorted_feature_names <- feature_names[sorted_feature_indices]
 
 # Print the sorted variable names
 print(sorted_feature_names)
+```
+
+
+```{r}
+
 
 
 ```
