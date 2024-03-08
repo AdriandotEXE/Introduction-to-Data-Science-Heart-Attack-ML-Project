@@ -1,0 +1,249 @@
+---
+title: "Heart Failure Analysis"
+author: "Adrian Tores"
+date: "2024-02-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(tidyverse)     # For data manipulation and visualization
+library(caret)         # For machine learning tasks
+library(reticulate)    # For hyperparameter optimization
+library(RcppRoll)      # For fast rolling functions
+library(gridExtra)     # For arranging plots
+library(ggplot2)       # Load the ggplot2 package
+# Specify the file path using forward slashes or double backslashes
+file_path <- "C:/Users/adria/Downloads/Introduction to Data Science/Project/2022/heart_2022_no_nans.csv"
+
+# Read the CSV file and assign it to a variable
+data <- read.csv(file_path)
+
+# Check the structure of the data
+str(data)
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+library(tidyverse)    # For data manipulation and visualization
+library(ggplot2)      # For creating plots
+
+# Create a data frame for the counts of each category
+health_counts <- data %>%
+  count(GeneralHealth)
+
+# Plotting
+ggplot(health_counts, aes(x = GeneralHealth, y = n)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "General Health", y = "Counts", title = "Distribution of General Health") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  # Rotate x-axis labels
+
+  
+```
+```{r}
+# Selecting specific columns
+selected_cols <- c(
+  "Sex", "GeneralHealth", "PhysicalHealthDays", "MentalHealthDays",
+  "PhysicalActivities", "SleepHours", "RemovedTeeth", "HadHeartAttack",
+  "HadAngina", "HadStroke", "HadAsthma", "HadSkinCancer", "HadCOPD",
+  "HadDepressiveDisorder", "HadKidneyDisease", "HadArthritis", "HadDiabetes",
+  "DeafOrHardOfHearing", "BlindOrVisionDifficulty", "DifficultyConcentrating",
+  "DifficultyWalking", "DifficultyDressingBathing", "DifficultyErrands",
+  "SmokerStatus", "ECigaretteUsage", "ChestScan", "RaceEthnicityCategory",
+  "AgeCategory", "HeightInMeters", "WeightInKilograms", "BMI", "AlcoholDrinkers",
+  "HIVTesting", "FluVaxLast12", "PneumoVaxEver", "TetanusLast10Tdap", "HighRiskLastYear"
+)
+
+
+
+data_subset <- data[selected_cols]
+# Print the dimensions and the first few rows of the selected data
+print(dim(data_subset))
+head(data_subset)
+
+library(dplyr)
+
+# Separate columns by data type
+cat_cols <- data_subset %>%
+  select_if(is.character) %>%
+  names()
+
+num_cols <- data_subset %>%
+  select_if(is.numeric) %>%
+  names()
+
+dbl_cols <- data_subset %>%
+  select_if(is.double) %>%
+  names()
+
+# Remove state variables from the dataset
+data_subset <- data_subset %>%
+  select(-starts_with("State"))  # Remove columns starting with "State"
+
+# Data preprocessing
+# Convert categorical variables to factors
+data_subset <- mutate_if(data_subset, is.character, as.factor)
+
+# Handle missing values if any
+data_subset <- na.omit(data_subset)
+
+# Set seed for reproducibility
+set.seed(123)  # for reproducibility
+
+# Split data into training and testing sets
+train_index <- sample(nrow(data_subset), 0.7 * nrow(data_subset))  # 70% train, 30% test
+train_data <- data_subset[train_index, ]
+test_data <- data_subset[-train_index, ]
+
+# Model training
+# Fit logistic regression model
+model <- glm(HadHeartAttack ~ ., data = train_data, family = binomial)
+
+# Model evaluation
+# Make predictions on test set
+pred_probs <- predict(model, newdata = test_data, type = "response")
+
+# Convert probabilities to binary predictions
+pred_labels <- ifelse(pred_probs > 0.5, "Yes", "No")
+
+# Convert pred_labels to a factor with levels "No" and "Yes"
+pred_labels <- factor(pred_labels, levels = c("No", "Yes"))
+
+# Convert test_data$HadHeartAttack to a factor with the same levels as pred_labels
+test_data$HadHeartAttack <- factor(test_data$HadHeartAttack, levels = c("No", "Yes"))
+
+# Evaluate predictions
+conf_matrix <- confusionMatrix(data = pred_labels, reference = test_data$HadHeartAttack)
+print(conf_matrix)
+
+# Print accuracy
+print(paste("Accuracy:", conf_matrix$overall["Accuracy"]))
+# Print the lengths of cat_cols, num_cols, and dbl_cols
+cat("Length of cat_cols:", length(cat_cols), "\n")
+cat("Length of num_cols:", length(num_cols), "\n")
+cat("Length of dbl_cols:", length(dbl_cols), "\n")
+
+# Print the total number of columns in data_train
+cat("Total number of columns in data_train:", ncol(data_train), "\n")
+
+```
+
+
+```{r}
+summary(data_subset[, c("PhysicalHealthDays", "MentalHealthDays", "SleepHours", "HeightInMeters", "WeightInKilograms", "BMI")])
+
+```
+
+
+```{r}
+# Print summary of the logistic regression model
+summary(model)
+
+# Extract feature importances from the model
+feature_importances <- summary(model)$coefficients[-1, "Pr(>|z|)"]  # Extract p-values as importance scores
+
+# Create a data frame for feature importances
+feature_importance_data <- data.frame(
+  feature = names(feature_importances),
+  importance = feature_importances
+)
+
+# Sort the data frame by importance in descending order
+feature_importance_data <- feature_importance_data[order(feature_importance_data$importance, decreasing = TRUE), ]
+
+
+# Plot Top N Features Only
+top_n <- 5 # Adjust this value based on how many top features you want to display
+
+# Create the plot
+ggplot(head(feature_importance_data, top_n), aes(x = importance, y = reorder(factor(feature, levels = rev(feature_importance_data$feature)), importance))) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Importance", y = "Feature", title = paste("Top", top_n, "Feature Importances")) +
+  theme_minimal() +
+  coord_flip()  # Horizontal bar plot
+```
+
+
+```{r}
+# Removing "HadHeartAttack" column
+data_without_had_heart_attack <- data[, -which(names(data) == "HadHeartAttack")]
+yes_counts <- sapply(data_without_had_heart_attack, function(col) sum(data$HadHeartAttack == "Yes" & col == "Yes"))
+top_15_columns <- names(sort(yes_counts, decreasing = TRUE)[1:15])
+top_15_counts <- yes_counts[top_15_columns]
+barplot(top_15_counts, main = "Top 15 variables that appear in user who have had heart attack", col = "green", las = 2)
+ 
+#Most common age group of users who have had heart attacks + barplot
+ 
+heart_attack_data <- data[data$HadHeartAttack == "Yes", ]
+most_common_age_group <- names(sort(table(heart_attack_data$AgeCategory), decreasing = TRUE))[1]
+cat("Most common Age group who have had heart attacks:", most_common_age_group, "\n")
+age_heart_attack_counts <- table(data$AgeCategory, data$HadHeartAttack)
+yes_counts_by_age <- as.data.frame(age_heart_attack_counts[, "Yes", drop = FALSE])
+barplot(yes_counts_by_age$Freq, names.arg = yes_counts_by_age$Var1,
+        main = "HadHeartAttack by Age Category",
+        xlab = "Age Category", ylab = "Count", col = "blue", las = 2)
+
+ 
+#Percentage of user who have and have not had heart attacks + Pie Chart
+percentage_NoHeartAttack <- round(mean(data$HadHeartAttack == "No") * 100, 2)
+percentage_HeartAttack <- round(mean(data$HadHeartAttack == "Yes") * 100, 2)
+print(paste("Percentage of 'No' in HadHeartAttack column:", percentage_NoHeartAttack, "%"))
+print(paste("Percentage of 'Yes' in HadHeartAttack column:", percentage_HeartAttack, "%"))
+ 
+ 
+pie(c(percentage_NoHeartAttack, percentage_HeartAttack),
+    labels = c(paste("Have not Had Heart Attack : ", percentage_NoHeartAttack, "%"), paste("Have had Heart Attack: ", percentage_HeartAttack, "%")),
+    main = "Distribution of HadHeartAttack Responses",
+    col = c("orange", "brown"))
+#Total number of users who have and have not had heart attacks + hist
+ 
+total_NoHeartAttack <- sum(data$HadHeartAttack == "No")
+total_HeartAttack <- sum(data$HadHeartAttack == "Yes")
+print(paste("Total number of 'No' in HadHeartAttack column:", total_NoHeartAttack))
+print(paste("Total number of 'Yes' in HadHeartAttack column:", total_HeartAttack))
+ 
+numeric_had_heart_attack <- as.numeric(data$HadHeartAttack == "Yes")
+hist(numeric_had_heart_attack, breaks = c(-0.5, 0.5, 1.5),
+     main = "Have not had Heart Attack Vs Have had Heart Attack",
+     xlab = "HadHeartAttack", col = c("yellow", "black"), labels = c("Have not had a Heart Attack", "Have had a Heart Attack"))
+```
+
+
+```{r}
+
+# Extract predictor variable names from the model object
+predictor_variables <- names(coef(model))[-1]  # Exclude the intercept term
+
+# Print the list of predictor variables
+print(predictor_variables)
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
