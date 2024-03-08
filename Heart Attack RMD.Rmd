@@ -30,8 +30,88 @@ data <- read.csv(file_path)
 
 # Check the structure of the data
 str(data)
+```
 
 
+```{r}
+# Removing "HadHeartAttack" column
+data_without_had_heart_attack <- data[, -which(names(data) == "HadHeartAttack")]
+yes_counts <- sapply(data_without_had_heart_attack, function(col) sum(data$HadHeartAttack == "Yes" & col == "Yes"))
+top_15_columns <- names(sort(yes_counts, decreasing = TRUE)[1:15])
+top_15_counts <- yes_counts[top_15_columns]
+barplot(top_15_counts, main = "Top 15 variables that appear in user who have had heart attack", col = "green", las = 2)
+ 
+#Most common age group of users who have had heart attacks + barplot
+ 
+heart_attack_data <- data[data$HadHeartAttack == "Yes", ]
+most_common_age_group <- names(sort(table(heart_attack_data$AgeCategory), decreasing = TRUE))[1]
+cat("Most common Age group who have had heart attacks:", most_common_age_group, "\n")
+age_heart_attack_counts <- table(data$AgeCategory, data$HadHeartAttack)
+yes_counts_by_age <- as.data.frame(age_heart_attack_counts[, "Yes", drop = FALSE])
+barplot(yes_counts_by_age$Freq, names.arg = yes_counts_by_age$Var1,
+        main = "HadHeartAttack by Age Category",
+        xlab = "Age Category", ylab = "Count", col = "blue", las = 2)
+
+ 
+#Percentage of user who have and have not had heart attacks + Pie Chart
+percentage_NoHeartAttack <- round(mean(data$HadHeartAttack == "No") * 100, 2)
+percentage_HeartAttack <- round(mean(data$HadHeartAttack == "Yes") * 100, 2)
+print(paste("Percentage of 'No' in HadHeartAttack column:", percentage_NoHeartAttack, "%"))
+print(paste("Percentage of 'Yes' in HadHeartAttack column:", percentage_HeartAttack, "%"))
+ 
+ 
+pie(c(percentage_NoHeartAttack, percentage_HeartAttack),
+    labels = c(paste("Have not Had Heart Attack : ", percentage_NoHeartAttack, "%"), paste("Have had Heart Attack: ", percentage_HeartAttack, "%")),
+    main = "Distribution of HadHeartAttack Responses",
+    col = c("orange", "brown"))
+#Total number of users who have and have not had heart attacks + hist
+ 
+total_NoHeartAttack <- sum(data$HadHeartAttack == "No")
+total_HeartAttack <- sum(data$HadHeartAttack == "Yes")
+print(paste("Total number of 'No' in HadHeartAttack column:", total_NoHeartAttack))
+print(paste("Total number of 'Yes' in HadHeartAttack column:", total_HeartAttack))
+ 
+numeric_had_heart_attack <- as.numeric(data$HadHeartAttack == "Yes")
+hist(numeric_had_heart_attack, breaks = c(-0.5, 0.5, 1.5),
+     main = "Have not had Heart Attack Vs Have had Heart Attack",
+     xlab = "HadHeartAttack", col = c("yellow", "black"), labels = c("Have not had a Heart Attack", "Have had a Heart Attack"))
+
+```
+
+
+```{r}
+
+
+library(ggplot2)
+
+# Generate some sample data
+data <- data.frame(
+  RaceEthnicityCategory = c("African American", "Asian", "Hispanic", "White"),
+  HadHeartAttack = c(10, 5, 8, 15)
+)
+
+ggplot(data, aes(x = RaceEthnicityCategory, y = HadHeartAttack, fill = RaceEthnicityCategory)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Heart Attack By Race", x = "Race", y = "HadHeartAttack") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 12, angle = 45, hjust = 1), # Adjust x-axis text size and angle
+    axis.text.y = element_text(size = 12), # Adjust y-axis text size
+    plot.title = element_text(size = 16, face = "bold"), # Adjust title text size and style
+    axis.title = element_text(size = 14), # Adjust axis title size
+    legend.text = element_text(size = 12), # Adjust legend text size
+    legend.title = element_text(size = 14) # Adjust legend title size
+  )
+
+
+```
+
+
+```{r}
+
+
+
+ 
 ```
 
 ## Including Plots
@@ -140,6 +220,15 @@ cat("Length of dbl_cols:", length(dbl_cols), "\n")
 
 # Print the total number of columns in data_train
 cat("Total number of columns in data_train:", ncol(data_train), "\n")
+```
+
+
+```{r}
+# Example of performing 5-fold cross-validation
+set.seed(123)  # for reproducibility
+cv <- trainControl(method = "cv", number = 5)
+model <- train(HadHeartAttack ~ ., data = train_data, method = "glm", trControl = cv, family = binomial)
+summary(model)
 
 ```
 
@@ -180,62 +269,29 @@ ggplot(head(feature_importance_data, top_n), aes(x = importance, y = reorder(fac
 
 
 ```{r}
-# Removing "HadHeartAttack" column
-data_without_had_heart_attack <- data[, -which(names(data) == "HadHeartAttack")]
-yes_counts <- sapply(data_without_had_heart_attack, function(col) sum(data$HadHeartAttack == "Yes" & col == "Yes"))
-top_15_columns <- names(sort(yes_counts, decreasing = TRUE)[1:15])
-top_15_counts <- yes_counts[top_15_columns]
-barplot(top_15_counts, main = "Top 15 variables that appear in user who have had heart attack", col = "green", las = 2)
- 
-#Most common age group of users who have had heart attacks + barplot
- 
-heart_attack_data <- data[data$HadHeartAttack == "Yes", ]
-most_common_age_group <- names(sort(table(heart_attack_data$AgeCategory), decreasing = TRUE))[1]
-cat("Most common Age group who have had heart attacks:", most_common_age_group, "\n")
-age_heart_attack_counts <- table(data$AgeCategory, data$HadHeartAttack)
-yes_counts_by_age <- as.data.frame(age_heart_attack_counts[, "Yes", drop = FALSE])
-barplot(yes_counts_by_age$Freq, names.arg = yes_counts_by_age$Var1,
-        main = "HadHeartAttack by Age Category",
-        xlab = "Age Category", ylab = "Count", col = "blue", las = 2)
-
- 
-#Percentage of user who have and have not had heart attacks + Pie Chart
-percentage_NoHeartAttack <- round(mean(data$HadHeartAttack == "No") * 100, 2)
-percentage_HeartAttack <- round(mean(data$HadHeartAttack == "Yes") * 100, 2)
-print(paste("Percentage of 'No' in HadHeartAttack column:", percentage_NoHeartAttack, "%"))
-print(paste("Percentage of 'Yes' in HadHeartAttack column:", percentage_HeartAttack, "%"))
- 
- 
-pie(c(percentage_NoHeartAttack, percentage_HeartAttack),
-    labels = c(paste("Have not Had Heart Attack : ", percentage_NoHeartAttack, "%"), paste("Have had Heart Attack: ", percentage_HeartAttack, "%")),
-    main = "Distribution of HadHeartAttack Responses",
-    col = c("orange", "brown"))
-#Total number of users who have and have not had heart attacks + hist
- 
-total_NoHeartAttack <- sum(data$HadHeartAttack == "No")
-total_HeartAttack <- sum(data$HadHeartAttack == "Yes")
-print(paste("Total number of 'No' in HadHeartAttack column:", total_NoHeartAttack))
-print(paste("Total number of 'Yes' in HadHeartAttack column:", total_HeartAttack))
- 
-numeric_had_heart_attack <- as.numeric(data$HadHeartAttack == "Yes")
-hist(numeric_had_heart_attack, breaks = c(-0.5, 0.5, 1.5),
-     main = "Have not had Heart Attack Vs Have had Heart Attack",
-     xlab = "HadHeartAttack", col = c("yellow", "black"), labels = c("Have not had a Heart Attack", "Have had a Heart Attack"))
-```
-
-
-```{r}
 
 # Extract predictor variable names from the model object
 predictor_variables <- names(coef(model))[-1]  # Exclude the intercept term
 
 # Print the list of predictor variables
 print(predictor_variables)
+```
+
+
+```{r}
+
 
 ```
 
 
 ```{r}
+
+
+```
+
+
+```{r}
+
 
 ```
 
