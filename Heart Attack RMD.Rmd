@@ -30,11 +30,17 @@ file_path <- "C:/Users/adria/Downloads/Introduction to Data Science/Project/2022
 data <- read.csv(file_path)
 
 # Check the structure of the data
-str(data)
 ```
 
 
-```{r, fig.width=8,fig.height=8}
+```{r}
+#Taking a look at the data
+str(data)
+summary(data)
+```
+
+
+```{r, fig.width=8,fig.height=3}
 # Remove "HadHeartAttack" column
 data_without_had_heart_attack <- data[, !names(data) == "HadHeartAttack"]
 
@@ -70,7 +76,7 @@ cat("Most common Age group who have had heart attacks:", most_common_age_group, 
 ```
 
 
-```{r}
+```{r, fig.width=8,fig.height=3}
 
 # Filter the data for only those who had a heart attack
 heart_attack_data <- subset(data, HadHeartAttack == "Yes")
@@ -107,7 +113,7 @@ cat("Percentage of 'Yes' in HadHeartAttack column:", percentage_HeartAttack, "%\
 ```
 
 
-```{r}
+```{r, fig.width=8,fig.height=3}
 # Plot distribution of HadHeartAttack responses using a pie chart
 pie(c(percentage_NoHeartAttack, percentage_HeartAttack),
     labels = c(paste("Have not Had Heart Attack:", percentage_NoHeartAttack, "%"),
@@ -132,7 +138,7 @@ barplot(table(data$HadHeartAttack),
 ```
 
 
-```{r}
+```{r, fig.width=8,fig.height=8}
 
 
 library(ggplot2)
