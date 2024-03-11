@@ -25,6 +25,7 @@ library(RcppRoll)      # For fast rolling functions
 library(gridExtra)     # For arranging plots
 library(ggplot2)       # Load the ggplot2 package
 library(tidyverse)    # For data manipulation and visualization
+library(dplyr)
 # Specify the file path using forward slashes or double backslashes
 file_path <- "C:/Users/adria/Downloads/Introduction to Data Science/Project/2022/heart_2022_no_nans.csv"
 
@@ -250,7 +251,7 @@ data_subset <- data[selected_cols]
 print(dim(data_subset))
 head(data_subset)
 
-library(dplyr)
+
 
 # Separate columns by data type
 cat_cols <- data_subset %>%
@@ -349,10 +350,10 @@ summary(data_subset[, c("PhysicalHealthDays", "MentalHealthDays", "SleepHours", 
 # Print summary of the logistic regression model
 summary(model)
 
-# Extract feature importances from the model
-feature_importances <- summary(model)$coefficients[-1, "Pr(>|z|)"]  # Extract p-values as importance scores
+# Extract feature importance from the model
+feature_importances <- summary(model)$coefficients[-1, "Pr(>|z|)"]
 
-# Create a data frame for feature importances
+# Create a data frame for feature importance
 feature_importance_data <- data.frame(
   feature = names(feature_importances),
   importance = feature_importances
