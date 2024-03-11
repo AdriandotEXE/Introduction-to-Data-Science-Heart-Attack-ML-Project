@@ -313,7 +313,11 @@ cat("Length of num_cols:", length(num_cols), "\n")
 cat("Length of dbl_cols:", length(dbl_cols), "\n")
 
 # Print the total number of columns in data_train
-cat("Total number of columns in data_train:", ncol(data_train), "\n")
+cat("Total number of columns in data_train:", ncol(train_data), "\n")
+
+summary(model)
+
+
 ```
 
 
@@ -323,6 +327,14 @@ set.seed(123)  # for reproducibility
 cv <- trainControl(method = "cv", number = 5)
 model <- train(HadHeartAttack ~ ., data = train_data, method = "glm", trControl = cv, family = binomial)
 summary(model)
+# Extract coefficient summary
+coef_summary <- summary(model)$coefficients
+
+# Sort coefficients based on p-values
+coef_summary <- coef_summary[order(coef_summary[, "Pr(>|z|)"]), ]
+
+# Print variable names and corresponding p-values
+print(coef_summary[, "Pr(>|z|)"])
 
 ```
 
@@ -360,18 +372,6 @@ ggplot(head(feature_importance_data, top_n), aes(x = importance, y = reorder(fac
   theme_minimal() +
   coord_flip()  # Horizontal bar plot
 ```
-
-
-```{r}
-
-# Extract predictor variable names from the model object
-predictor_variables <- names(coef(model))[-1]  # Exclude the intercept term
-
-# Print the list of predictor variables
-print(predictor_variables)
-```
-
-
 
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
