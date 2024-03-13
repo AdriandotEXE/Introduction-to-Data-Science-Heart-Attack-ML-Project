@@ -340,7 +340,16 @@ coef_summary <- coef_summary[order(coef_summary[, "Pr(>|z|)"]), ]
 
 # Print variable names and corresponding p-values
 print(coef_summary[, "Pr(>|z|)"])
+```
 
+
+```{r}
+# Print each output in cv_results
+for (i in names(cv_results)) {
+  cat("Output:", i, "\n")
+  print(cv_results[[i]])
+  cat("\n")
+}
 ```
 
 
