@@ -227,7 +227,7 @@ correlation_matrix <- cor(selected_data_numeric, use = "complete.obs")
 corrplot(correlation_matrix, method = "color", type = "upper", order = "hclust", addrect = 4)
 
 
-
+#Run step function for best predictor variables to use for linear model only
 
 ```
 ```{r}
@@ -317,8 +317,12 @@ cat("Length of dbl_cols:", length(dbl_cols), "\n")
 cat("Total number of columns in data_train:", ncol(train_data), "\n")
 
 summary(model)
-
-
+#03-11-24
+#Run tree model as an alternate
+#Percent impact for svm and tree model
+#varimt()
+#Introduce sampling method so that it accounts for excess Nos
+#Look for code for lecture on Inferential stats to create new population of better split of "yes" and "no"
 ```
 
 
