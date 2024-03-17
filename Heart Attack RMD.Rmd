@@ -26,6 +26,8 @@ library(gridExtra)     # For arranging plots
 library(ggplot2)       # Load the ggplot2 package
 library(tidyverse)    # For data manipulation and visualization
 library(dplyr)
+library(caTools)
+
 # Specify the file path using forward slashes or double backslashes
 file_path <- "C:/Users/adria/Downloads/Introduction to Data Science/Project/2022/heart_2022_no_nans.csv"
 
@@ -231,7 +233,6 @@ corrplot(correlation_matrix, method = "color", type = "upper", order = "hclust",
 
 ```
 ```{r}
-# Selecting specific columns
 selected_cols <- c(
   "Sex", "GeneralHealth", "PhysicalHealthDays", "MentalHealthDays",
   "PhysicalActivities", "SleepHours", "RemovedTeeth", "HadHeartAttack",
@@ -285,9 +286,15 @@ train_index <- sample(nrow(data_subset), 0.7 * nrow(data_subset))  # 70% train, 
 train_data <- data_subset[train_index, ]
 test_data <- data_subset[-train_index, ]
 
+
 # Model training
 # Fit logistic regression model
 model <- glm(HadHeartAttack ~ ., data = train_data, family = binomial)
+
+# Model evaluation
+# Make predictions on test set
+pred_probs <- predict(model, newdata = test_data, type = "response")
+
 
 # Model evaluation
 # Make predictions on test set
@@ -326,43 +333,7 @@ summary(model)
 ```
 
 
-```{r}
-# Example of performing 5-fold cross-validation
-set.seed(123)  # for reproducibility
-cv <- trainControl(method = "cv", number = 5)
-model <- train(HadHeartAttack ~ ., data = train_data, method = "glm", trControl = cv, family = binomial)
-summary(model)
-# Extract coefficient summary
-coef_summary <- summary(model)$coefficients
-
-# Sort coefficients based on p-values
-coef_summary <- coef_summary[order(coef_summary[, "Pr(>|z|)"]), ]
-
-# Print variable names and corresponding p-values
-print(coef_summary[, "Pr(>|z|)"])
-```
-
-
-```{r}
-# Print each output in cv_results
-for (i in names(cv_results)) {
-  cat("Output:", i, "\n")
-  print(cv_results[[i]])
-  cat("\n")
-}
-```
-
-
-```{r}
-summary(data_subset[, c("PhysicalHealthDays", "MentalHealthDays", "SleepHours", "HeightInMeters", "WeightInKilograms", "BMI")])
-
-```
-
-
-```{r}
-# Print summary of the logistic regression model
-summary(model)
-
+```{r, fig.width=10,fig.height=5}
 # Extract feature importance from the model
 feature_importances <- summary(model)$coefficients[-1, "Pr(>|z|)"]
 
@@ -385,6 +356,74 @@ ggplot(head(feature_importance_data, top_n), aes(x = importance, y = reorder(fac
   labs(x = "Importance", y = "Feature", title = paste("Top", top_n, "Feature Importances")) +
   theme_minimal() +
   coord_flip()  # Horizontal bar plot
+```
+```
+
+
+```{r}
+# Load required library for decision trees
+library("rpart")
+
+# Fit decision tree model
+tree_model <- rpart(HadHeartAttack ~ ., data = train_data, method = "class")
+
+# Make predictions on the test set
+tree_pred <- predict(tree_model, newdata = test_data, type = "class")
+
+# Evaluate predictions
+tree_conf_matrix <- confusionMatrix(tree_pred, test_data$HadHeartAttack)
+print(tree_conf_matrix)
+
+# Print accuracy
+print(paste("Decision Tree Accuracy:", tree_conf_matrix$overall["Accuracy"]))
+
+var_importance <- varImp(tree_model)
+print(var_importance)
+
+summary(tree_model)
+
+```
+
+
+```{r}
+
+# Load required library for SVM
+
+# Fit SVM model
+svm_model <- svm(HadHeartAttack ~ ., data = train_data, kernel = "radial")
+
+# Make predictions on the test set
+svm_pred <- predict(svm_model, newdata = test_data)
+
+# Evaluate predictions
+svm_conf_matrix <- confusionMatrix(svm_pred, test_data$HadHeartAttack)
+print(svm_conf_matrix)
+
+# Print accuracy
+print(paste("SVM Accuracy:", svm_conf_matrix$overall["Accuracy"]))
+
+```
+
+
+```{r}
+# Example of performing 5-fold cross-validation
+set.seed(123)  # for reproducibility
+cv <- trainControl(method = "cv", number = 5)
+model <- train(HadHeartAttack ~ ., data = train_data, method = "glm", trControl = cv, family = binomial)
+
+# Extract coefficient summary
+coef_summary <- summary(model)$coefficients
+
+# Sort coefficients based on p-values
+coef_summary <- coef_summary[order(coef_summary[, "Pr(>|z|)"]), ]
+
+# Print variable names and corresponding p-values
+print(coef_summary[, "Pr(>|z|)"])
+```
+
+
+```{r}
+summary(model$results)
 ```
 
 
