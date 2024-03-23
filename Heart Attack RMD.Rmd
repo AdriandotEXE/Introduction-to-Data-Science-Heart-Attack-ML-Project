@@ -333,6 +333,71 @@ summary(model)
 ```
 
 
+```{r}
+library(caret)
+# Determine the minority and majority classes
+minority_class <- "Yes"  # Adjust based on your target variable
+majority_class <- "No"   # Adjust based on your target variable
+
+# Calculate the number of samples in the minority and majority classes
+minority_count <- sum(data_subset$HadHeartAttack == minority_class)
+majority_count <- sum(data_subset$HadHeartAttack == majority_class)
+
+# Undersample the majority class to match the number of samples in the minority class
+undersampled_majority <- data_subset[data_subset$HadHeartAttack == majority_class, ]
+undersampled_majority <- undersampled_majority[sample(nrow(undersampled_majority), minority_count), ]
+
+# Combine the undersampled majority class with all samples from the minority class
+balanced_data <- rbind(undersampled_majority, data_subset[data_subset$HadHeartAttack == minority_class, ])
+
+# Shuffle the rows to randomize the order
+balanced_data <- balanced_data[sample(nrow(balanced_data)), ]
+
+# Verify the class distribution in the balanced dataset
+table(balanced_data$HadHeartAttack)
+
+# Split data into training and testing sets
+train_index <- sample(nrow(balanced_data), 0.7 * nrow(balanced_data))  # 70% train, 30% test
+train_data <- balanced_data[train_index, ]
+test_data <- balanced_data[-train_index, ]
+
+# Model training
+# Fit logistic regression model using the training data
+model <- glm(HadHeartAttack ~ ., data = train_data, family = binomial)
+
+# Summary of the model
+summary(model)
+
+
+# Model evaluation
+# Make predictions on test set
+pred_probs <- predict(model, newdata = test_data, type = "response")
+
+# Convert probabilities to binary predictions
+pred_labels <- ifelse(pred_probs > 0.5, "Yes", "No")
+
+# Convert pred_labels to a factor with levels "No" and "Yes"
+pred_labels <- factor(pred_labels, levels = c("No", "Yes"))
+
+# Convert test_data$HadHeartAttack to a factor with the same levels as pred_labels
+test_data$HadHeartAttack <- factor(test_data$HadHeartAttack, levels = c("No", "Yes"))
+
+# Evaluate predictions
+conf_matrix <- confusionMatrix(data = pred_labels, reference = test_data$HadHeartAttack)
+print(conf_matrix)
+
+# Print accuracy
+print(paste("Accuracy:", conf_matrix$overall["Accuracy"]))
+# Print the lengths of cat_cols, num_cols, and dbl_cols
+cat("Length of cat_cols:", length(cat_cols), "\n")
+cat("Length of num_cols:", length(num_cols), "\n")
+cat("Length of dbl_cols:", length(dbl_cols), "\n")
+
+
+
+```
+
+
 ```{r, fig.width=10,fig.height=5}
 # Extract feature importance from the model
 feature_importances <- summary(model)$coefficients[-1, "Pr(>|z|)"]
