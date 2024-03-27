@@ -415,11 +415,11 @@ feature_importance_data <- feature_importance_data[order(feature_importance_data
 # Plot Top N Features Only
 top_n <- 5 # Adjust this value based on how many top features you want to display
 
-# Create the plot
-ggplot(head(feature_importance_data, top_n), aes(x = importance, y = reorder(factor(feature, levels = rev(feature_importance_data$feature)), importance))) +
+ggplot(head(feature_importance_data, top_n), aes(x = reorder(factor(feature, levels = rev(feature_importance_data$feature)), importance), y = importance)) +
   geom_bar(stat = "identity", fill = "skyblue") +
-  labs(x = "Importance", y = "Feature", title = paste("Top", top_n, "Feature Importances")) +
+  labs(x = "Feature", y = "Importance", title = paste("Top", top_n, "Feature Importances")) +
   theme_minimal() +
+  theme(axis.text.x = element_text(size = 8)) +  # Adjust font size for X-axis text
   coord_flip()  # Horizontal bar plot
 ```
 ```
